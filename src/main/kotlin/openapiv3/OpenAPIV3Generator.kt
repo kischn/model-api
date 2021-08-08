@@ -58,8 +58,8 @@ fun addPath(
     for (childPathDefinition in pathDefinition.children) {
         addPath(
             apiV3,
-            parentPackage + "." + pathDefinition.pkg,
-            parentPath + pathDefinition.path,
+            currPackage,
+            currPath,
             childPathDefinition
         )
     }

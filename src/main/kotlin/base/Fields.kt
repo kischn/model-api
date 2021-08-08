@@ -22,10 +22,6 @@ abstract class Field(
      * 转成 schemaObject
      */
     abstract fun toSchemaObject(): SchemaObject
-
-    open fun show() {
-        println(toString())
-    }
 }
 
 /**
@@ -37,10 +33,6 @@ class StringField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
         return SchemaObject(type = "string")
     }
-
-    override fun toString(): String {
-        return "string(name=$name,remark=$remark,size=$size,pattern=$pattern)"
-    }
 }
 
 /**
@@ -51,10 +43,6 @@ class IntegerField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
         return SchemaObject(type = "integer", format = "int32")
     }
-
-    override fun toString(): String {
-        return "int(name=$name,remark=$remark,range=$range)"
-    }
 }
 
 /**
@@ -63,10 +51,6 @@ class IntegerField(name: String, remark: String?) : Field(name, remark) {
 class DateField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
         return SchemaObject(type = "integer", format = "int64")
-    }
-
-    override fun toString(): String {
-        return "date(name=$name,remark=$remark)"
     }
 }
 
@@ -77,15 +61,8 @@ class IntListField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
         return SchemaObject(
             type = "array",
-            items = SchemaObject(
-                type = "int",
-                format = "int32"
-            )
+            items = SchemaObject(type = "integer", format = "int32")
         )
-    }
-
-    override fun toString(): String {
-        return "list<int>(name=$name,remark=$remark)"
     }
 }
 
@@ -96,14 +73,8 @@ class StringListField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
         return SchemaObject(
             type = "array",
-            items = SchemaObject(
-                type = "string"
-            )
+            items = SchemaObject(type = "string")
         )
-    }
-
-    override fun toString(): String {
-        return "list<string>(name=$name,remark=$remark)"
     }
 }
 
@@ -112,14 +83,7 @@ class StringListField(name: String, remark: String?) : Field(name, remark) {
  */
 class ModelListField(name: String, remark: String, private val modelDef: ModelDefinition) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
-        return SchemaObject(
-            type = "array",
-            items = modelDef.toSchemaObject()
-        )
-    }
-
-    override fun toString(): String {
-        return "list<Object>(name=$name,remark=$remark)"
+        return SchemaObject(type = "array", items = modelDef.toSchemaObject())
     }
 }
 
@@ -134,14 +98,4 @@ class ModelDefinitionField(
     override fun toSchemaObject(): SchemaObject {
         return modelDef.toSchemaObject()
     }
-
-    override fun show() {
-        println("field,name:$name,subModule:")
-        modelDef.print()
-    }
-
-    override fun toString(): String {
-        return "$name>$modelDef"
-    }
 }
-

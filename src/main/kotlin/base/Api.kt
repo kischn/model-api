@@ -22,6 +22,13 @@ abstract class Api(val method: String, val path: String) {
                 )
             }
         }
+
+        open fun toRequestBody(): RequestBodyObject {
+            return RequestBodyObject(
+                required = true,
+                content = hashMapOf("application/json" to MediaTypeObject(model.toSchemaObject()))
+            )
+        }
     }
 
     /**
@@ -51,7 +58,7 @@ abstract class Api(val method: String, val path: String) {
                     `in` = "query",
                     name = "pageSize",
                     schema = SchemaObject(
-                        type = "int",
+                        type = "integer",
                         format = "int32"
                     ),
                     required = true
@@ -62,7 +69,7 @@ abstract class Api(val method: String, val path: String) {
                     `in` = "query",
                     name = "p",
                     schema = SchemaObject(
-                        type = "int",
+                        type = "integer",
                         format = "int32"
                     ),
                     required = true
@@ -77,23 +84,59 @@ abstract class Api(val method: String, val path: String) {
      */
     class BodyRequest(private val model: ModelDefinition) : Request(model) {
 
+        override fun toRequestBody(): RequestBodyObject {
+            return RequestBodyObject(
+                required = false,
+                content = hashMapOf("application/json" to MediaTypeObject(model.toSchemaObject()))
+            )
+        }
     }
 
 
     /**
      * bare 的响应
      */
-    open class Response(private val mode: ModelDefinition)
+    open class Response(private val model: ModelDefinition) {
+        open fun toMediaTypeObject(): MediaTypeObject {
+            return MediaTypeObject(model.toSchemaObject())
+        }
+    }
 
     /**
      * 默认的 code/message/data 封装
      */
-    class WrappedResponse(private val model: ModelDefinition) : Response(model)
+    class WrappedResponse(private val model: ModelDefinition) : Response(model) {
+        override fun toMediaTypeObject(): MediaTypeObject {
+            val wrappedProperties = hashMapOf(
+                "code" to SchemaObject(type = "integer", format = "int32"),
+                "message" to SchemaObject(type = "string"),
+                "data" to model.toSchemaObject()
+            )
+            return MediaTypeObject(SchemaObject(type = "object", properties = wrappedProperties, title = model.name))
+        }
+    }
 
     /**
      * 分页的响应
      */
     class PagedResponse(private val model: ModelDefinition) : Response(model) {
+
+        override fun toMediaTypeObject(): MediaTypeObject {
+            val wrappedProperties = hashMapOf(
+                "code" to SchemaObject(type = "integer", format = "int32"),
+                "message" to SchemaObject(type = "string"),
+                "data" to SchemaObject(
+                    type = "object",
+                    properties = hashMapOf(
+                        "totalCount" to SchemaObject(type = "integer", format = "int32"),
+                        "totalPage" to SchemaObject(type = "integer", format = "int32"),
+                        "pageSize" to SchemaObject(type = "integer", format = "int32"),
+                        "list" to SchemaObject(type = "array", items = model.toSchemaObject())
+                    )
+                )
+            )
+            return MediaTypeObject(SchemaObject(type = "object", properties = wrappedProperties))
+        }
     }
 
     /**
@@ -156,17 +199,22 @@ abstract class Api(val method: String, val path: String) {
     }
 
     abstract fun fillPathItemObject(pathItemObject: PathItemObject)
+
+    open fun getResponseObject(description: String): ResponseObject {
+        val content = HashMap<String, MediaTypeObject>()
+        resp?.let {
+            content["application/json"] = it.toMediaTypeObject()
+        }
+        return ResponseObject(description = description, content = content)
+    }
 }
 
 class PutApi(path: String) : Api("PUT", path) {
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
         pathItemObject["put"] = OperationObject(
             description = super.description,
-            requestBody = RequestBodyObject(
-                required = false,
-                content = HashMap()
-            ),
-            responses = HashMap()
+            requestBody = req?.toRequestBody(),
+            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
 }
@@ -175,11 +223,8 @@ class PostApi(path: String) : Api("POST", path) {
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
         pathItemObject["post"] = OperationObject(
             description = super.description,
-            requestBody = RequestBodyObject(
-                required = false,
-                content = HashMap()
-            ),
-            responses = HashMap()
+            requestBody = req?.toRequestBody(),
+            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
 }
@@ -188,7 +233,8 @@ class GetApi(path: String) : Api("GET", path) {
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
         pathItemObject["get"] = OperationObject(
             description = super.description,
-            parameters = super.req?.toParameters() ?: emptyList()
+            parameters = super.req?.toParameters() ?: emptyList(),
+            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
 }
@@ -197,7 +243,8 @@ class DeleteApi(path: String) : Api("DELETE", path) {
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
         pathItemObject["get"] = OperationObject(
             description = super.description,
-            parameters = super.req?.toParameters() ?: emptyList()
+            parameters = super.req?.toParameters() ?: emptyList(),
+            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
 }

@@ -20,6 +20,7 @@ class OpenAPIV3(projectName: String) {
 
 // https://spec.openapis.org/oas/v3.0.3#schema-object
 data class SchemaObject(
+    val title: String? = null,
     val type: String,
     val properties: HashMap<String, SchemaObject>? = null,
     val format: String? = null,
