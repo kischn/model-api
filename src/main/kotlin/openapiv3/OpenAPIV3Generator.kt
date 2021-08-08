@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * @date 2021/8/7
  */
 
-fun gen(pathDefinition: PathDefinition) {
+fun genOpenAPIV3JSON(pathDefinition: PathDefinition):String {
     val apiV3 = OpenAPIV3(pathDefinition.name)
     addPath(
         apiV3,
@@ -20,7 +20,7 @@ fun gen(pathDefinition: PathDefinition) {
     val objectMapper = ObjectMapper()
     // 默认忽略 null 值的属性
     objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    println(objectMapper.writeValueAsString(apiV3))
+    return objectMapper.writeValueAsString(apiV3)
 }
 
 fun addPath(
@@ -32,14 +32,7 @@ fun addPath(
     // 先处理 components
     val currPackage = if (parentPackage.isEmpty()) pathDefinition.pkg else parentPackage + "." + pathDefinition.pkg
     pathDefinition.models.forEach { m ->
-        val properties = HashMap<String, SchemaObject>()
-        m.fields.forEach { f ->
-            properties[f.name] = f.toSchemaObject()
-        }
-        apiV3.components.schemas[currPackage + "." + m.name] = SchemaObject(
-            type = "object",
-            properties = properties
-        )
+        m.registerComponents(apiV3, currPackage)
     }
 
     // 再处理接口

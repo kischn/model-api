@@ -57,7 +57,7 @@ abstract class Api(val method: String, val path: String) {
                 ParameterObject(
                     `in` = "query",
                     name = "pageSize",
-                    schema = SchemaObject(
+                    schema = SchemaObjectDef(
                         type = "integer",
                         format = "int32"
                     ),
@@ -68,7 +68,7 @@ abstract class Api(val method: String, val path: String) {
                 ParameterObject(
                     `in` = "query",
                     name = "p",
-                    schema = SchemaObject(
+                    schema = SchemaObjectDef(
                         type = "integer",
                         format = "int32"
                     ),
@@ -108,11 +108,11 @@ abstract class Api(val method: String, val path: String) {
     class WrappedResponse(private val model: ModelDefinition) : Response(model) {
         override fun toMediaTypeObject(): MediaTypeObject {
             val wrappedProperties = hashMapOf(
-                "code" to SchemaObject(type = "integer", format = "int32"),
-                "message" to SchemaObject(type = "string"),
+                "code" to SchemaObjectDef(type = "integer", format = "int32"),
+                "message" to SchemaObjectDef(type = "string"),
                 "data" to model.toSchemaObject()
             )
-            return MediaTypeObject(SchemaObject(type = "object", properties = wrappedProperties, title = model.name))
+            return MediaTypeObject(SchemaObjectDef(type = "object", properties = wrappedProperties, title = model.name))
         }
     }
 
@@ -122,20 +122,20 @@ abstract class Api(val method: String, val path: String) {
     class PagedResponse(private val model: ModelDefinition) : Response(model) {
 
         override fun toMediaTypeObject(): MediaTypeObject {
-            val wrappedProperties = hashMapOf(
-                "code" to SchemaObject(type = "integer", format = "int32"),
-                "message" to SchemaObject(type = "string"),
-                "data" to SchemaObject(
+            val wrappedProperties: HashMap<String, SchemaObject> = hashMapOf(
+                "code" to SchemaObjectDef(type = "integer", format = "int32"),
+                "message" to SchemaObjectDef(type = "string"),
+                "data" to SchemaObjectDef(
                     type = "object",
                     properties = hashMapOf(
-                        "totalCount" to SchemaObject(type = "integer", format = "int32"),
-                        "totalPage" to SchemaObject(type = "integer", format = "int32"),
-                        "pageSize" to SchemaObject(type = "integer", format = "int32"),
-                        "list" to SchemaObject(type = "array", items = model.toSchemaObject())
+                        "totalCount" to SchemaObjectDef(type = "integer", format = "int32"),
+                        "totalPage" to SchemaObjectDef(type = "integer", format = "int32"),
+                        "pageSize" to SchemaObjectDef(type = "integer", format = "int32"),
+                        "list" to SchemaObjectDef(type = "array", items = model.toSchemaObject())
                     )
                 )
             )
-            return MediaTypeObject(SchemaObject(type = "object", properties = wrappedProperties))
+            return MediaTypeObject(SchemaObjectDef(type = "object", properties = wrappedProperties))
         }
     }
 

@@ -1,6 +1,9 @@
 package base
 
+import openapiv3.OpenAPIV3
 import openapiv3.SchemaObject
+import openapiv3.SchemaObjectDef
+import openapiv3.SchemaObjectRef
 
 /**
  * @author kischn
@@ -8,6 +11,11 @@ import openapiv3.SchemaObject
 open class ModelDefinition(val name: String) {
 
     val fields: MutableList<Field> = ArrayList()
+
+    /**
+     * 在 openAPI v3 中的 ref 位置
+     */
+    private var componentId: String? = null
 
     /**
      * 字符串
@@ -79,22 +87,27 @@ open class ModelDefinition(val name: String) {
     }
 
     fun toSchemaObject(): SchemaObject {
+        if (componentId != null) {
+            return SchemaObjectRef("#/components/schemas/$componentId")
+        }
         val properties = HashMap<String, SchemaObject>()
         fields.forEach { f ->
             properties[f.name] = f.toSchemaObject()
         }
-        return SchemaObject(
-            type = "object",
-            properties = properties
-        )
+        return SchemaObjectDef(type = "object", properties = properties)
     }
 
-    override fun toString(): String {
-        return fields.map { it.toString() }.toString()
-    }
-
-    fun print() {
-        println(toString())
+    /**
+     * 把自己注册到 openAPI v3 的 components 里面去
+     */
+    fun registerComponents(apiV3: OpenAPIV3, currPackage: String) {
+        val properties = HashMap<String, SchemaObject>()
+        fields.forEach { f ->
+            properties[f.name] = f.toSchemaObject()
+        }
+        val compId = "$currPackage.$name"
+        apiV3.components.schemas[compId] = SchemaObjectDef(type = "object", properties = properties)
+        componentId = compId
     }
 }
 
