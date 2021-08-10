@@ -39,9 +39,9 @@ val bookApi = path("/book", "books", "书籍相关") {
             nullable = false
         }
         string("name", "名称") {
-            size = 0..10
+            size = 1..10
             nullable = false
-            pattern = Pattern.compile("^\\w+$")
+            pattern = Pattern.compile("^\\w{1,10}$")
         }
         date("publishDate", "发布日期")
         // 对象
@@ -73,7 +73,7 @@ val bookApi = path("/book", "books", "书籍相关") {
 
     post {
         description("保存")
-        req(bookModel)
+        reqBody(bookModel)
         wrappedResp(bookModel)
     }
 

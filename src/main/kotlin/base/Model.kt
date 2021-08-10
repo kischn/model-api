@@ -86,27 +86,40 @@ open class ModelDefinition(val name: String) {
         })
     }
 
-    fun toSchemaObject(): SchemaObject {
-        if (componentId != null) {
-            return SchemaObjectRef("#/components/schemas/$componentId")
-        }
+    /**
+     * 组件是否已经注册
+     */
+    fun componentRegistered(): Boolean = componentId != null
+
+    protected open fun buildSchemaObject(title: String? = null): SchemaObjectDef {
         val properties = HashMap<String, SchemaObject>()
         fields.forEach { f ->
             properties[f.name] = f.toSchemaObject()
         }
-        return SchemaObjectDef(type = "object", properties = properties)
+        val requiredProperties = fields.filterNot { it.nullable }.map { it.name }.toList()
+        return SchemaObjectDef(
+            title = title,
+            type = "object",
+            properties = properties,
+            required = requiredProperties.ifEmpty { null }
+        )
+    }
+
+    fun toSchemaObject(title: String? = null): SchemaObject {
+
+        if (componentId != null) {
+            return SchemaObjectRef("#/components/schemas/$componentId")
+        }
+
+        return buildSchemaObject(title)
     }
 
     /**
      * 把自己注册到 openAPI v3 的 components 里面去
      */
-    fun registerComponents(apiV3: OpenAPIV3, currPackage: String) {
-        val properties = HashMap<String, SchemaObject>()
-        fields.forEach { f ->
-            properties[f.name] = f.toSchemaObject()
-        }
+    open fun registerComponents(apiV3: OpenAPIV3, currPackage: String) {
         val compId = "$currPackage.$name"
-        apiV3.components.schemas[compId] = SchemaObjectDef(type = "object", properties = properties)
+        apiV3.components.schemas[compId] = toSchemaObject()
         componentId = compId
     }
 }
@@ -114,7 +127,11 @@ open class ModelDefinition(val name: String) {
 /**
  * 动态的,离散的,不会生成一个类的
  */
-class DynamicModelDefinition : ModelDefinition("")
+class DynamicModelDefinition : ModelDefinition("") {
+    override fun registerComponents(apiV3: OpenAPIV3, currPackage: String) {
+        // do nothing
+    }
+}
 
 /**
  * 扁平的模型
@@ -126,27 +143,52 @@ object FlatModel {
     /**
      * 原生类型都有啥
      */
-    enum class FlatModelDataType {
-        STRING,
-        INT,
-        BOOLEAN,
-        FLOAT
+    enum class FlatModelDataType(val openApiTypeName: String) {
+        STRING("string"),
+        INT("integer"),
+        BOOLEAN("boolean"),
+        FLOAT("number");
     }
 
     /**
      * 原生类型的
      */
-    class PrimitiveModelDefinition(type: FlatModelDataType) : FlatModelDefinition()
+    class PrimitiveModelDefinition(private val type: FlatModelDataType) : FlatModelDefinition() {
+        override fun buildSchemaObject(title: String?): SchemaObjectDef {
+            return SchemaObjectDef(
+                title = title,
+                type = type.openApiTypeName
+            )
+        }
+    }
 
     /**
      * 原生类型的数组的
      */
-    class PrimitiveListModelDefinition(type: FlatModelDataType) : FlatModelDefinition()
+    class PrimitiveListModelDefinition(private val primitiveType: FlatModelDataType) : FlatModelDefinition() {
+        override fun buildSchemaObject(title: String?): SchemaObjectDef {
+            return SchemaObjectDef(
+                title = title,
+                type = "array",
+                items = SchemaObjectDef(
+                    type = primitiveType.openApiTypeName
+                )
+            )
+        }
+    }
 
     /**
      * 对象 list
      */
-    class ObjectListModelDefinition(model: ModelDefinition) : FlatModelDefinition()
+    class ObjectListModelDefinition(private val model: ModelDefinition) : FlatModelDefinition() {
+        override fun buildSchemaObject(title: String?): SchemaObjectDef {
+            return SchemaObjectDef(
+                title = title,
+                type = "array",
+                items = model.toSchemaObject()
+            )
+        }
+    }
 
     fun string(): FlatModelDefinition {
         return PrimitiveModelDefinition(FlatModelDataType.STRING)

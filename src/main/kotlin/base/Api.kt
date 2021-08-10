@@ -7,7 +7,6 @@ import openapiv3.*
  */
 abstract class Api(val method: String, val path: String) {
 
-
     /**
      * 请求参数
      */
@@ -30,12 +29,6 @@ abstract class Api(val method: String, val path: String) {
             )
         }
     }
-
-    /**
-     * 动态的 request.
-     * 不会生成一个类.
-     */
-    class DynamicRequest() : Request(ModelDefinition("_empty"))
 
     /**
      * 分页查询的请求
@@ -84,6 +77,10 @@ abstract class Api(val method: String, val path: String) {
      */
     class BodyRequest(private val model: ModelDefinition) : Request(model) {
 
+        override fun toParameters(): List<ParameterObject> {
+            return emptyList()
+        }
+
         override fun toRequestBody(): RequestBodyObject {
             return RequestBodyObject(
                 required = false,
@@ -91,7 +88,6 @@ abstract class Api(val method: String, val path: String) {
             )
         }
     }
-
 
     /**
      * bare 的响应
@@ -162,14 +158,6 @@ abstract class Api(val method: String, val path: String) {
         req = Request(model)
     }
 
-    fun reqBody(model: ModelDefinition) {
-        req = BodyRequest(model)
-    }
-
-    fun reqBody(init: DynamicModelDefinition.() -> Unit) {
-        req = BodyRequest(DynamicModelDefinition().apply(init))
-    }
-
     fun req(init: DynamicModelDefinition.() -> Unit) {
         req = Request(DynamicModelDefinition().apply(init))
     }
@@ -194,7 +182,7 @@ abstract class Api(val method: String, val path: String) {
         resp = WrappedResponse(FlatModel.init())
     }
 
-    open fun pageResp(model: ModelDefinition) {
+    fun pageResp(model: ModelDefinition) {
         resp = PagedResponse(model)
     }
 
@@ -209,45 +197,51 @@ abstract class Api(val method: String, val path: String) {
     }
 }
 
-class PutApi(path: String) : Api("PUT", path) {
-    override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject["put"] = OperationObject(
-            description = super.description,
-            requestBody = req?.toRequestBody(),
-            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
-        )
-    }
-}
+/**
+ * 基于查询参数的 api .如 get/delete
+ */
+abstract class ParameterBasedApi(method: String, path: String) : Api(method, path) {
 
-class PostApi(path: String) : Api("POST", path) {
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject["post"] = OperationObject(
-            description = super.description,
-            requestBody = req?.toRequestBody(),
-            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
-        )
-    }
-}
-
-class GetApi(path: String) : Api("GET", path) {
-    override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject["get"] = OperationObject(
+        pathItemObject[method] = OperationObject(
             description = super.description,
             parameters = super.req?.toParameters() ?: emptyList(),
             responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
+
 }
 
-class DeleteApi(path: String) : Api("DELETE", path) {
+/**
+ * 基于请求体的 api 如 post/put
+ */
+abstract class RequestBodyBasedApi(method: String, path: String) : Api(method, path) {
+    /**
+     * 查询参数
+     */
+    private var reqBody: BodyRequest? = null
+
+    fun reqBody(model: ModelDefinition) {
+        reqBody = BodyRequest(model)
+    }
+
     override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject["get"] = OperationObject(
+        pathItemObject[method] = OperationObject(
             description = super.description,
-            parameters = super.req?.toParameters() ?: emptyList(),
+            parameters = req?.toParameters(),
+            requestBody = reqBody?.toRequestBody(),
             responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
         )
     }
 }
+
+class PutApi(path: String) : RequestBodyBasedApi("put", path)
+
+class PostApi(path: String) : RequestBodyBasedApi("post", path)
+
+class GetApi(path: String) : ParameterBasedApi("get", path)
+
+class DeleteApi(path: String) : ParameterBasedApi("delete", path)
 
 fun path(
     path: String,

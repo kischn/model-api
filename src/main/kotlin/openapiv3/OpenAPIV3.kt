@@ -27,7 +27,13 @@ data class SchemaObjectDef(
     val type: String,
     val properties: HashMap<String, SchemaObject>? = null,
     val format: String? = null,
-    val items: SchemaObject? = null
+    val items: SchemaObject? = null,
+    val maximum: Int? = null,
+    val minimum: Int? = null,
+    val maxLength: Int? = null,
+    val minLength: Int? = null,
+    val pattern: String? = null,
+    val required: List<String>? = null,
 ) : SchemaObject
 
 // 引用
