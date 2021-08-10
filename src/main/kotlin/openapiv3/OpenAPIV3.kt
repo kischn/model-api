@@ -18,7 +18,7 @@ class OpenAPIV3(projectInfo: ProjectInfo) {
     val paths = LinkedHashMap<String, PathItemObject>()
     val components = ComponentsObject(HashMap())
 
-    fun addPath(
+    private fun doAddPath(
         parentPackage: String,
         parentPath: String,
         pathDefinition: PathDefinition
@@ -41,13 +41,17 @@ class OpenAPIV3(projectInfo: ProjectInfo) {
                 paths[currPath + path] = pathItemObject
             }
 
-        // 检查自己有没有 subApi 有则递归
-        for (childPathDefinition in pathDefinition.children) {
-            addPath(
-                currPackage,
-                currPath,
-                childPathDefinition
-            )
+        // 递归 subApi
+        addPath(currPackage, currPath, pathDefinition.children)
+    }
+
+    fun addPath(
+        parentPackage: String,
+        parentPath: String,
+        pathDefinitions: List<PathDefinition>
+    ) {
+        for (pathDefinition in pathDefinitions) {
+            doAddPath(parentPackage, parentPath, pathDefinition)
         }
     }
 }

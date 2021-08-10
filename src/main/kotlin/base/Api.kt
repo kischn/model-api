@@ -287,7 +287,7 @@ class PathDefinition(
         apis.add(DeleteApi(path).apply(init))
     }
 
-    fun subApis(vararg path: PathDefinition) {
+    fun subPaths(vararg path: PathDefinition) {
         children.addAll(path)
     }
 

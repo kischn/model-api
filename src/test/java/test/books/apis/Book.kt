@@ -1,5 +1,6 @@
 package test.books.apis
 
+import base.PathDefinition
 import base.path
 import java.util.regex.Pattern
 
@@ -11,7 +12,7 @@ import java.util.regex.Pattern
 /**
  * 图书相关接口
  */
-val bookApi = path("/book", "books", "书籍相关") {
+fun bookApi() = path("/book", "books", "书籍相关") {
 
     /**
      * 作者模型
@@ -99,5 +100,59 @@ val bookApi = path("/book", "books", "书籍相关") {
         wrappedResp {
             string()
         }
+    }
+
+    val bookSection = path("/section", "section", "章节") {
+        val bookSection = entity("BookSection") {
+            id()
+            string("sectionName") {
+                nullable = false
+            }
+            int("contentLength")
+        }
+
+        get {
+            description = "章节详情"
+            req { id() }
+            wrappedResp(bookSection)
+        }
+
+        get("/s") {
+            description = "章节查询"
+            req {
+                id()
+            }
+            pageResp(bookSection)
+        }
+    }
+
+    // 加入到子章节里面
+    subPaths(bookSection())
+}
+
+/**
+ * 书籍章节
+ */
+fun bookSection(): PathDefinition = path("/section", "section", "章节") {
+    val bookSection = entity("BookSection") {
+        id()
+        string("sectionName") {
+            nullable = false
+        }
+        int("contentLength")
+    }
+
+    get {
+        description = "章节详情"
+        req { id() }
+        wrappedResp(bookSection)
+    }
+
+    get("/s") {
+        description = "章节查询"
+        req {
+            id()
+        }
+        pageResp(bookSection)
     }
 }
