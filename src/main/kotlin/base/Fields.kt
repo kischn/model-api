@@ -46,7 +46,7 @@ class StringField(name: String, remark: String?) : Field(name, remark) {
  * 数值类型
  */
 class IntegerField(name: String, remark: String?) : Field(name, remark) {
-    var range: IntRange? = null
+    private var range: IntRange? = null
     override fun toSchemaObject(): SchemaObject {
         return SchemaObjectDef(
             title = remark,

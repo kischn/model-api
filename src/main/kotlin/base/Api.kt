@@ -103,7 +103,7 @@ abstract class Api(val method: String, val path: String) {
      */
     class WrappedResponse(private val model: ModelDefinition) : Response(model) {
         override fun toMediaTypeObject(): MediaTypeObject {
-            val wrappedProperties = hashMapOf(
+            val wrappedProperties = linkedMapOf(
                 "code" to SchemaObjectDef(type = "integer", format = "int32"),
                 "message" to SchemaObjectDef(type = "string"),
                 "data" to model.toSchemaObject()
@@ -118,12 +118,12 @@ abstract class Api(val method: String, val path: String) {
     class PagedResponse(private val model: ModelDefinition) : Response(model) {
 
         override fun toMediaTypeObject(): MediaTypeObject {
-            val wrappedProperties: HashMap<String, SchemaObject> = hashMapOf(
+            val wrappedProperties: HashMap<String, SchemaObject> = linkedMapOf(
                 "code" to SchemaObjectDef(type = "integer", format = "int32"),
                 "message" to SchemaObjectDef(type = "string"),
                 "data" to SchemaObjectDef(
                     type = "object",
-                    properties = hashMapOf(
+                    properties = linkedMapOf(
                         "totalCount" to SchemaObjectDef(type = "integer", format = "int32"),
                         "totalPage" to SchemaObjectDef(type = "integer", format = "int32"),
                         "pageSize" to SchemaObjectDef(type = "integer", format = "int32"),
@@ -189,11 +189,10 @@ abstract class Api(val method: String, val path: String) {
     abstract fun fillPathItemObject(pathItemObject: PathItemObject)
 
     open fun getResponseObject(description: String): ResponseObject {
-        val content = HashMap<String, MediaTypeObject>()
-        resp?.let {
-            content["application/json"] = it.toMediaTypeObject()
-        }
-        return ResponseObject(description = description, content = content)
+        return ResponseObject(
+            description = description,
+            content = resp?.let { hashMapOf("application/json" to it.toMediaTypeObject()) } ?: hashMapOf()
+        )
     }
 }
 
