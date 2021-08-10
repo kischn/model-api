@@ -206,7 +206,7 @@ abstract class ParameterBasedApi(method: String, path: String) : Api(method, pat
         pathItemObject[method] = OperationObject(
             description = super.description,
             parameters = super.req?.toParameters() ?: emptyList(),
-            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
+            responses = hashMapOf(200 to getResponseObject(description))
         )
     }
 
@@ -230,7 +230,7 @@ abstract class RequestBodyBasedApi(method: String, path: String) : Api(method, p
             description = super.description,
             parameters = req?.toParameters(),
             requestBody = reqBody?.toRequestBody(),
-            responses = hashMapOf(200 to getResponseObject(description + "成功响应结果"))
+            responses = hashMapOf(200 to getResponseObject(description))
         )
     }
 }
