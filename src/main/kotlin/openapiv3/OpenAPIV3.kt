@@ -14,6 +14,7 @@ class OpenAPIV3(projectName: String) {
         val title = projectName
         val version = "1.0"
     }
+    val security = arrayOf(mapOf("jwt" to emptyList<Any>()))
     val paths = LinkedHashMap<String, PathItemObject>()
     val components = ComponentsObject(HashMap())
 }
@@ -41,7 +42,14 @@ data class SchemaObjectRef(val `$ref`: String) : SchemaObject
 
 // https://spec.openapis.org/oas/v3.0.3#components-object
 data class ComponentsObject(
-    val schemas: HashMap<String, SchemaObject>
+    val schemas: HashMap<String, SchemaObject>,
+    val securitySchemes: Map<String, Map<String, String>> = mapOf(
+        "jwt" to mapOf(
+            "type" to "apiKey",
+            "name" to "api_key",
+            "in" to "header"
+        )
+    )
 )
 
 // https://spec.openapis.org/oas/v3.0.3#parameter-object
