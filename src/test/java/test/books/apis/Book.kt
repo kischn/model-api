@@ -92,4 +92,12 @@ val bookApi = path("/book", "books", "书籍相关") {
             intList()
         }
     }
+
+    delete {
+        description = "删除图书"
+        req { id() }
+        wrappedResp {
+            string()
+        }
+    }
 }
