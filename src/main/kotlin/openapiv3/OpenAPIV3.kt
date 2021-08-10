@@ -1,5 +1,7 @@
 package openapiv3
 
+import base.PathDefinition
+
 /**
  * 生成符合 OpenAPI v3 规范的描述文件.
  * https://spec.openapis.org/oas/v3.0.3#path-item-object
@@ -7,16 +9,47 @@ package openapiv3
  * @author kischn
  * @date 2021/8/7
  */
+data class ProjectInfo(val title: String, val version: String)
 
-class OpenAPIV3(projectName: String) {
+class OpenAPIV3(projectInfo: ProjectInfo) {
     val openapi = "3.0.3"
-    val info = object {
-        val title = projectName
-        val version = "1.0"
-    }
+    val info = projectInfo
     val security = arrayOf(mapOf("jwt" to emptyList<Any>()))
     val paths = LinkedHashMap<String, PathItemObject>()
     val components = ComponentsObject(HashMap())
+
+    fun addPath(
+        parentPackage: String,
+        parentPath: String,
+        pathDefinition: PathDefinition
+    ) {
+        // 先处理 components
+        val currPackage = if (parentPackage.isEmpty()) pathDefinition.pkg else parentPackage + "." + pathDefinition.pkg
+        pathDefinition.models.forEach { m ->
+            m.registerComponents(this, currPackage)
+        }
+
+        // 再处理接口
+        val paths = this.paths
+        val currPath = parentPath + pathDefinition.path
+        pathDefinition.apis
+            .groupBy { api -> api.path }
+            .forEach { (path, apiList) ->
+                val pathItemObject = PathItemObject()
+                apiList.forEach { api -> api.fillPathItemObject(pathItemObject) }
+                // 写入到 paths 里面
+                paths[currPath + path] = pathItemObject
+            }
+
+        // 检查自己有没有 subApi 有则递归
+        for (childPathDefinition in pathDefinition.children) {
+            addPath(
+                currPackage,
+                currPath,
+                childPathDefinition
+            )
+        }
+    }
 }
 
 // https://spec.openapis.org/oas/v3.0.3#schema-object
