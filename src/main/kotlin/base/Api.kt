@@ -186,7 +186,7 @@ abstract class Api(val method: String, val path: String) {
         resp = PagedResponse(model)
     }
 
-    abstract fun fillPathItemObject(pathItemObject: PathItemObject)
+    abstract fun getOperationObject(): Pair<String, OperationObject>
 
     open fun getResponseObject(description: String): ResponseObject {
         return ResponseObject(
@@ -201,8 +201,8 @@ abstract class Api(val method: String, val path: String) {
  */
 abstract class ParameterBasedApi(method: String, path: String) : Api(method, path) {
 
-    override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject[method] = OperationObject(
+    override fun getOperationObject(): Pair<String, OperationObject> {
+        return method to OperationObject(
             description = super.description,
             parameters = super.req?.toParameters() ?: emptyList(),
             responses = hashMapOf(200 to getResponseObject(description))
@@ -224,8 +224,8 @@ abstract class RequestBodyBasedApi(method: String, path: String) : Api(method, p
         reqBody = BodyRequest(model)
     }
 
-    override fun fillPathItemObject(pathItemObject: PathItemObject) {
-        pathItemObject[method] = OperationObject(
+    override fun getOperationObject(): Pair<String, OperationObject> {
+        return method to OperationObject(
             description = super.description,
             parameters = req?.toParameters(),
             requestBody = reqBody?.toRequestBody(),
@@ -243,12 +243,11 @@ class GetApi(path: String) : ParameterBasedApi("get", path)
 class DeleteApi(path: String) : ParameterBasedApi("delete", path)
 
 fun path(
-    path: String,
-    pkg: String,
     name: String,
+    description: String,
     init: PathDefinition.() -> Unit
 ): PathDefinition {
-    return PathDefinition(path, pkg, name).apply(init)
+    return PathDefinition("/$name", name.lowercase(), description).apply(init)
 }
 
 class PathDefinition(

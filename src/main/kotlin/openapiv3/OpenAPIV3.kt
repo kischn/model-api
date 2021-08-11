@@ -11,10 +11,14 @@ import base.PathDefinition
  */
 data class ProjectInfo(val title: String, val version: String)
 
+// https://spec.openapis.org/oas/v3.0.3#tag-object
+data class TagObject(val name: String, val description: String?)
+
 class OpenAPIV3(projectInfo: ProjectInfo) {
     val openapi = "3.0.3"
     val info = projectInfo
     val security = arrayOf(mapOf("jwt" to emptyList<Any>()))
+    val tags = ArrayList<TagObject>()
     val paths = LinkedHashMap<String, PathItemObject>()
     val components = ComponentsObject(HashMap())
 
@@ -29,6 +33,10 @@ class OpenAPIV3(projectInfo: ProjectInfo) {
             m.registerComponents(this, currPackage)
         }
 
+        // 处理 tag
+        val tagName = pathDefinition.name
+        tags.add(TagObject(tagName, ""))
+
         // 再处理接口
         val paths = this.paths
         val currPath = parentPath + pathDefinition.path
@@ -36,10 +44,15 @@ class OpenAPIV3(projectInfo: ProjectInfo) {
             .groupBy { api -> api.path }
             .forEach { (path, apiList) ->
                 val pathItemObject = PathItemObject()
-                apiList.forEach { api -> api.fillPathItemObject(pathItemObject) }
+                apiList.forEach { api ->
+                    val (method, operationObject) = api.getOperationObject()
+                    pathItemObject[method] = operationObject
+                    operationObject.tags.add(tagName)
+                }
                 // 写入到 paths 里面
                 paths[currPath + path] = pathItemObject
             }
+
 
         // 递归 subApi
         addPath(currPackage, currPath, pathDefinition.children)
@@ -111,6 +124,7 @@ data class MediaTypeObject(
 
 // https://spec.openapis.org/oas/v3.0.3#operation-object
 data class OperationObject(
+    val tags: ArrayList<String> = ArrayList(),
     val description: String,
     val parameters: List<ParameterObject>? = null,
     val requestBody: RequestBodyObject? = null,
