@@ -17,7 +17,8 @@ abstract class Api(val method: String, val path: String) {
                     `in` = "query",
                     name = f.name,
                     schema = f.toSchemaObject(),
-                    required = !f.nullable
+                    required = !f.nullable,
+                    description = f.remark
                 )
             }
         }
@@ -42,7 +43,8 @@ abstract class Api(val method: String, val path: String) {
                         `in` = "query",
                         name = f.name,
                         schema = f.toSchemaObject(),
-                        required = !f.nullable
+                        required = !f.nullable,
+                        description = f.remark
                     )
                 )
             }
@@ -54,7 +56,8 @@ abstract class Api(val method: String, val path: String) {
                         type = "integer",
                         format = "int32"
                     ),
-                    required = true
+                    required = true,
+                    description = "页大小"
                 )
             )
             parameters.add(
@@ -65,7 +68,8 @@ abstract class Api(val method: String, val path: String) {
                         type = "integer",
                         format = "int32"
                     ),
-                    required = true
+                    required = true,
+                    description = "当前页"
                 )
             )
             return parameters

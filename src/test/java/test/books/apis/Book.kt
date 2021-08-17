@@ -1,6 +1,7 @@
 package test.books.apis
 
 import base.PathDefinition
+import base.StringFieldMock
 import base.path
 import java.util.regex.Pattern
 
@@ -19,7 +20,9 @@ fun bookApi() = path("book", "书籍相关") {
      */
     val authorModel = model("Author") {
         id()
-        string("name", "姓名")
+        string("name", "姓名") {
+            mock = StringFieldMock.CNAME
+        }
     }
 
     /**
@@ -27,7 +30,9 @@ fun bookApi() = path("book", "书籍相关") {
      */
     val userAndSection = entity("UserAndSection") {
         id()
-        string("name", "姓名")
+        string("name", "姓名") {
+            mock = StringFieldMock.CNAME
+        }
         string("section", "贡献的章节")
     }
 
@@ -38,6 +43,8 @@ fun bookApi() = path("book", "书籍相关") {
         id()
         string("isbn", "ISBN号") {
             nullable = false
+            size = 10..10
+            mock = StringFieldMock.SENTENCE
         }
         string("name", "名称") {
             size = 1..10

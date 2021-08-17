@@ -1,5 +1,6 @@
 package base
 
+import openapiv3.Mock
 import openapiv3.SchemaObject
 import openapiv3.SchemaObjectDef
 import java.util.regex.Pattern
@@ -25,19 +26,56 @@ abstract class Field(
     abstract fun toSchemaObject(): SchemaObject
 }
 
+enum class StringFieldMock {
+    /**
+     * 中文姓名
+     */
+    CNAME,
+
+    /**
+     * 标题
+     */
+    CTITLE,
+
+    /**
+     * 邮箱
+     */
+    EMAIL,
+
+    /**
+     * 句子
+     */
+    SENTENCE,
+
+    /**
+     * 中文兔子
+     */
+    CSENTENCE;
+
+    /**
+     * 生成表达式
+     */
+    fun expression(size: IntRange?): Mock {
+        val suffix = size?.let { "(${it.first}, ${it.last})" } ?: ""
+        return Mock("@${name.lowercase()}$suffix")
+    }
+}
+
 /**
  * 字符串类型
  */
 class StringField(name: String, remark: String?) : Field(name, remark) {
     var size: IntRange? = null
     var pattern: Pattern? = null
+    var mock: StringFieldMock? = null
     override fun toSchemaObject(): SchemaObject {
         return SchemaObjectDef(
             type = "string",
             title = remark,
             minLength = size?.start,
             maxLength = size?.endInclusive,
-            pattern = pattern?.toString()
+            pattern = pattern?.toString(),
+            mock = mock?.expression(size)
         )
     }
 }
@@ -46,14 +84,15 @@ class StringField(name: String, remark: String?) : Field(name, remark) {
  * 数值类型
  */
 class IntegerField(name: String, remark: String?) : Field(name, remark) {
-    private var range: IntRange? = null
+    var range: IntRange? = null
     override fun toSchemaObject(): SchemaObject {
         return SchemaObjectDef(
             title = remark,
             type = "integer",
             format = "int32",
             minimum = range?.start,
-            maximum = range?.endInclusive
+            maximum = range?.endInclusive,
+            mock = Mock("@integer" + (range?.let { "(${it.first}, ${it.last})" } ?: ""))
         )
     }
 }
@@ -63,7 +102,12 @@ class IntegerField(name: String, remark: String?) : Field(name, remark) {
  */
 class DateField(name: String, remark: String?) : Field(name, remark) {
     override fun toSchemaObject(): SchemaObject {
-        return SchemaObjectDef(title = remark, type = "integer", format = "int64")
+        return SchemaObjectDef(
+            title = remark,
+            type = "integer",
+            format = "int64",
+            mock = Mock("@timestamp")
+        )
     }
 }
 

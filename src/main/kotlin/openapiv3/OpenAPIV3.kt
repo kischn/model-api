@@ -72,6 +72,8 @@ class OpenAPIV3(projectInfo: ProjectInfo) {
 // https://spec.openapis.org/oas/v3.0.3#schema-object
 interface SchemaObject
 
+data class Mock(val mock: String)
+
 // 直接定义
 data class SchemaObjectDef(
     val title: String? = null,
@@ -85,6 +87,8 @@ data class SchemaObjectDef(
     val minLength: Int? = null,
     val pattern: String? = null,
     val required: List<String>? = null,
+    val description: String? = title,
+    val mock: Mock? = null
 ) : SchemaObject
 
 // 引用
@@ -107,7 +111,8 @@ data class ParameterObject(
     val `in`: String = "query",
     val name: String,
     val schema: SchemaObject,
-    val required: Boolean = false
+    val required: Boolean = false,
+    val description: String?
 )
 
 // https://spec.openapis.org/oas/v3.0.3#request-body-object
@@ -126,6 +131,7 @@ data class MediaTypeObject(
 data class OperationObject(
     val tags: ArrayList<String> = ArrayList(),
     val description: String,
+    val summary: String = description,
     val parameters: List<ParameterObject>? = null,
     val requestBody: RequestBodyObject? = null,
     val responses: HashMap<Int, ResponseObject>? = null
